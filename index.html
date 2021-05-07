@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href=style.css>
+
+    <title>task</title>
+<!--  -->
+
+</head>
+<body onload="myfun()">
+    <div class="fluid-container">
+        <button class="btn btn-success mr-btn" onclick="exportTableToExcel('tblData')">Export Table Data To Excel File</button>
+
+        <table  class="table display" id= "tblData" >
+
+           <thead>
+            <tr>
+                <th><button onclick="sortAndDisplay(0)">Name</button></th>
+                <th><button onclick="sortAndDisplay(1)">Email</button></th>
+                <th><button>Address</button></th>
+                <th><button>Website</button></th>
+                <th><button>Image</button></th>
+            </tr>
+           </thead>
+        <tbody id="tbody">
+        </tbody>
+        </table>
+        <div class="row">
+            <div class="col-md-2">
+                <button id="btn" onclick="pre()" class="btn btn-success">Previous</button>
+
+            </div>
+            <div class="col-md-2">
+                <p id="pagenumber"></p>
+
+            </div>
+            <div class="col-md-2">
+                <button id="btn" onclick="next()" class="btn btn-success">Next</button></div>
+
+             </div>
+        </div>
+        
+
+<!--  -->
+
+<script type="text/javascript">
+// next and previous button
+var tblBody = document.getElementById("tbody");
+
+var page = 1;
+var array = [];
+function pre() {
+    if(page > 1) {
+        page--;
+        myfun();
+    }
+}
+function next() {
+    page++;
+    myfun();
+}
+// Api get
+    function myfun(){
+        document.getElementById("pagenumber").innerHTML = page;
+        console.log(page);
+    var xhttp = new XMLHttpRequest();
+    xhttp.open("GET", "https://fakerapi.it/api/v1/companies?_seed="+ page +"&_quantity=5", true);
+    xhttp.send();
+    xhttp.onreadystatechange = function (){
+        if (xhttp.readyState == 4 && xhttp.status == 200) {
+           var jsonObject = JSON.parse(xhttp.responseText);
+       
+        var rootDiv = document.getElementById("rootdiv");
+
+  // creates a <table> element and a <tbody> element
+    
+array = jsonObject.data;
+
+sortAndDisplay(0);
+
+        }
+    }
+    
+}
+// sorting Method
+function sortAndDisplay(sortParam){
+    while (tblBody.firstChild) {
+    tblBody.removeChild(tblBody.firstChild);
+    }
+
+if(sortParam == 0){
+    array.sort((a, b) => {
+    let fa = a.name.toLowerCase(),
+        fb = b.name.toLowerCase();
+
+    if (fa < fb) {
+        return -1;
+    }
+    if (fa > fb) {
+        return 1;
+    }
+    return 0;
+});
+} else if(sortParam == 1){
+    array.sort((a, b) => {
+    let fa = a.email.toLowerCase(),
+        fb = b.email.toLowerCase();
+
+    if (fa < fb) {
+        return -1;
+    }
+    if (fa > fb) {
+        return 1;
+    }
+    return 0;
+});
+
+}
+
+  // creating all cells
+  for (var i = 0; i < array.length; i++) {
+
+var arrayItem = array[i];
+
+// creates a table row
+var row = document.createElement("tr");
+
+  
+  // the end of the table row
+  var cell = document.createElement("td");
+  var cellText = document.createTextNode(arrayItem.name);
+  cell.appendChild(cellText);
+  row.appendChild(cell);
+
+  var cell = document.createElement("td");
+  var cellText = document.createTextNode(arrayItem.email);
+  cell.appendChild(cellText);
+  row.appendChild(cell);
+
+  var cell = document.createElement("td");
+  var cellText = document.createTextNode(arrayItem.addresses[0].street + '\n' + arrayItem.addresses[0].streetName  + '\n' + arrayItem.addresses[0].buildingNumber + '\n' + arrayItem.addresses[0].city  + '\n' + arrayItem.addresses[0].zipcode  + '\n' + arrayItem.addresses[0].country  );
+  cell.appendChild(cellText);
+  row.appendChild(cell);
+
+  var cell = document.createElement("td");
+  var cellText = document.createTextNode(arrayItem.website);
+  cell.appendChild(cellText);
+  row.appendChild(cell);
+
+
+  var cell = document.createElement("td");
+  var img = document.createElement("img");
+   img.src = arrayItem.image;
+   img.height= 50;
+//   var cellText = document.createTextNode(arrayItem.image);
+  cell.appendChild(img);
+  row.appendChild(cell);
+
+  
+
+
+// add the row to the end of the table body
+tblBody.appendChild(row);
+   }
+}
+
+// export to excel
+    function exportTableToExcel(tableID, filename = ''){
+        var downloadLink;
+        var dataType = 'application/vnd.ms-excel';
+        var tableSelect = document.getElementById(tableID);
+        var tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
+        
+        // Specify file name
+        filename = filename?filename+'.xls':'excel_data.xls';
+        
+        // Create download link element
+        downloadLink = document.createElement("a");
+        
+        document.body.appendChild(downloadLink);
+        
+        if(navigator.msSaveOrOpenBlob){
+            var blob = new Blob(['\ufeff', tableHTML], {
+                type: dataType
+            });
+            navigator.msSaveOrOpenBlob( blob, filename);
+        }else{
+            // Create a link to the file
+            downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
+        
+            // Setting the file name
+            downloadLink.download = filename;
+            
+            //triggering the function
+            downloadLink.click();
+        }
+    }
+   </script>
+
+</body>
+
+</html>
